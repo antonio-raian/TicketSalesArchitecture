@@ -1,4 +1,4 @@
-# TiketSalerArquiteture
+# TicketSalesArchitecture
 Architecture for a concert ticket sales system
 
 This architecture was created using the tool https://sequencediagram.org/
