@@ -1,0 +1,91 @@
+title Logins - Show de Rock em Rio
+
+actor Fã de Rock
+participant Pag. Web
+participant Sistema de Autenticação
+participant Sistema de Fila
+participant Sistema de Venda
+participant Banco de dados
+
+Fã de Rock->Pag. Web: Informa Login
+activate Fã de Rock
+activate Pag. Web
+Pag. Web->Sistema de Autenticação: Realiza Autenticação
+activate Sistema de Autenticação
+Sistema de Autenticação->Banco de dados: Valida Informações de Login
+activate Banco de dados
+
+alt Sucesso
+Banco de dados->Sistema de Autenticação: Sucesso
+deactivate Banco de dados
+Sistema de Autenticação->Pag. Web: Login
+deactivate Sistema de Autenticação
+Pag. Web->Fã de Rock: Permite prosseguir
+else Falha
+activate Sistema de Autenticação
+activate Banco de dados
+Banco de dados->Sistema de Autenticação: Falha
+deactivate Banco de dados
+Sistema de Autenticação->Pag. Web: Falha
+deactivate Sistema de Autenticação
+destroysilent Sistema de Autenticação
+Pag. Web->Fã de Rock: Solicita cadastro
+
+deactivate Fã de Rock
+destroysilent Fã de Rock
+end
+activate Fã de Rock
+Fã de Rock -> Pag. Web: Solicita ingresso
+Pag. Web-->Pag. Web: Armazena Solicitação (cart)
+Pag. Web -> Sistema de Fila: Adiciona a solicitação no final da fila
+activate Sistema de Fila
+Sistema de Fila-->Sistema de Fila: Salva a solicitação na fila
+deactivateafter Sistema de Fila
+Sistema de Venda -> Banco de dados: Busca ingressos disponíveis
+activate Sistema de Venda
+activate Banco de dados
+Banco de dados->Sistema de Venda: Lista de Ingressos disponíveis
+deactivate Banco de dados
+loop Enquanto houver ingressos e solicitação na fila
+  Sistema de Venda->Sistema de Fila: Pega o próximo da fila
+  activate Sistema de Fila
+  Sistema de Fila->Sistema de Venda: Solicitação do primeiro na fila
+  deactivate Sistema de Fila
+  Sistema de Venda-->Sistema de Venda: Verifica se há a quantidade de\ningressos que o cliente deseja
+  alt Existe ingressos disponíveis
+  Sistema de Venda-->Sistema de Venda: Reserva o ingresso
+  Sistema de Venda->Pag. Web: Solicita Pagamento
+  Pag. Web->Fã de Rock: Solicita pagamento
+  Fã de Rock->Pag. Web: Pagamento
+  Pag. Web->Sistema de Venda: Pagamento Realizado
+  Sistema de Venda->*Sistema de Pagamento: Verifica situalção do Pagamento
+  activate Sistema de Pagamento
+  Sistema de Pagamento->Sistema de Venda: Pagamento Realizado
+  deactivate Sistema de Pagamento
+  destroysilent Sistema de Pagamento
+  Sistema de Venda->Banco de dados: Atualiza lista de ingressos
+  activate Banco de dados
+  Banco de dados->Sistema de Venda: OK
+  deactivate Banco de dados
+  Sistema de Venda->Pag. Web: Ingresso(s)
+  Sistema de Venda->Sistema de Fila: Item Processado
+  deactivate Sistema de Venda
+  activate Sistema de Fila
+  Sistema de Fila-->Sistema de Fila: Remove solicitação
+  deactivateafter Sistema de Fila
+  Pag. Web->Fã de Rock: Sucesso (Fã Feliz 😊)
+  deactivate Pag. Web
+  else Não há ingressos
+  activate Pag. Web
+  activate Sistema de Venda
+  Sistema de Venda->Pag. Web: Ingresso(s) Indisponíveis 
+  Sistema de Venda->Sistema de Fila: Item Processado
+  deactivate Sistema de Venda
+  activate Sistema de Fila
+  Sistema de Fila-->Sistema de Fila: Remove solicitação
+  deactivateafter Sistema de Fila
+  Pag. Web->Fã de Rock: Sem Ingresso\n(Fã Triste 🥲 )
+  deactivate Pag. Web
+  ==END LOOP==
+  end
+end
